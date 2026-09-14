@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>라이엇 샵</title>
+
+    <!-- 토스페이먼츠 SDK v2 -->
+    <script src="https://js.tosspayments.com/v2/standard"></script>
+    <!-- 다음/카카오 우편번호 서비스 API -->
+    <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+
+        /* 1. 상단 헤더 */
+        header {
+            background-color: #333;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header .logo {
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        header nav a, header nav button {
+            color: white;
+            text-decoration: none;
+            margin-left: 15px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        header nav button.btn-cart {
+            background-color: #555;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        header nav button.btn-cart:hover {
+            background-color: #666;
+        }
+
+        header nav button.btn-order {
+            background-color: #0051FF;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        header nav button.btn-order:hover {
+            background-color: #003ebd;
+        }
+
+        /* 2. 중앙 대형 브랜드 섹션 */
+        .cart-summary {
+            background-color: transparent;
+            padding: 30px 20px 10px;
+            margin: 10px auto 0;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: none;
+        }
+
+        .brand-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .brand-logo {
+            height: 180px;
+            object-fit: contain;
+        }
+
+        /* 카테고리 네비게이션 바 */
+        .category-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            max-width: 1000px;
+            margin: 20px auto 30px;
+            padding: 12px 0;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .category-nav button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .category-nav button:hover,
+        .category-nav button.active {
+            color: #0051FF;
+            background-color: #eef4ff;
+        }
+
+        /* 3. 상품 목록 */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 10px;
+        }
+
+        .product-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+
+        .product-card h3 {
+            margin: 15px 0 10px;
+            font-size: 18px;
+        }
+
+        .product-card .price {
+            color: #e44d26;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .product-card button {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .product-card button:hover {
+            background-color: #555;
+        }
+
+        /* 4. 공통 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 420px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .modal-content input, .modal-content select {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* 5. 장바구니 모달 전용 스타일 */
+        .cart-list-wrapper {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+
+        .cart-item-info {
+            flex: 1;
+            margin-left: 12px;
+            text-align: left;
+        }
+
+        .cart-item-title {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .cart-item-price {
+            font-size: 13px;
+            color: #e44d26;
+            margin-top: 4px;
+        }
+
+        .cart-item-del-btn {
+            background-color: #ff4d4f;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .cart-item-del-btn:hover {
+            background-color: #d9363e;
+        }
+
+        /* 6. 상품 상세 모달 전용 스타일 */
+        .detail-modal-content {
+            width: 500px;
+        }
+
+        .product-detail-img-wrapper {
+            width: 100%;
+            height: 280px;
+            overflow: hidden;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .product-detail-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .product-detail-img-wrapper:hover .product-detail-img {
+            transform: scale(1.1);
+        }
+
+        .product-detail-desc {
+            font-size: 14px;
+            color: #666;
+            margin: 10px 0 20px;
+            line-height: 1.5;
+        }
+
+        .detail-btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .detail-btn-group button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-add-cart {
+            background-color: #333;
+            color: white;
+        }
+
+        .btn-add-cart:hover {
+            background-color: #555;
+        }
+
+        .btn-buy-now {
+            background-color: #0051FF;
+            color: white;
+        }
+
+        .btn-buy-now:hover {
+            background-color: #003ebd;
+        }
+
+        /* 주소 검색 행 스타일 */
+        .address-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .address-group input {
+            flex: 1;
+        }
+
+        .address-group button {
+            padding: 0 14px;
+            margin: 6px 0;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+
+        .address-group button:hover {
+            background-color: #333;
+        }
+
+        .modal-content button.submit-btn {
+            width: 100%;
+            background-color: #0051FF;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .modal-content button.submit-btn:hover {
+            background-color: #003ebd;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .toggle-text {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .toggle-text span {
+            color: #0051FF;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .guide-text {
+            font-size: 11px;
+            color: #666;
+            margin-top: -4px;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        /* 7. 결제창 요약 및 안내 */
+        .checkout-summary {
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .checkout-summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .total-price-box {
+            font-size: 16px;
+            font-weight: bold;
+            text-align: right;
+            margin-top: 8px;
+            color: #e44d26;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-top: 18px;
+            margin-bottom: 6px;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 4px;
+        }
+
+        /* 8. 토스 결제 방식 */
+        .toss-pay-box {
+            background-color: #f5f8ff;
+            border: 2px solid #0051FF;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .toss-pay-box span:first-child {
+            font-weight: bold;
+            color: #0051FF;
+            font-size: 15px;
+        }
+
+        .toss-badge {
+            background-color: #0051FF;
+            color: #ffffff !important;
+            border: none;
+            font-size: 12px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        /* 9. 우편번호 레이어 */
+        #postcode-layer {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 380px;
+            height: 460px;
+            background: #fff;
+            border: 2px solid #333;
+            z-index: 1100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #postcode-layer-close {
+            position: absolute;
+            right: 8px;
+            top: 4px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1101;
+            background: #fff;
+            width: 25px;
+            height: 25px;
+            text-align: center;
+            line-height: 22px;
+            border-radius: 50%;
+        }
+
+        /* 10. 모바일 반응형 */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            header nav {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .cart-summary {
+                padding: 20px 10px 0;
+            }
+            .brand-logo {
+                height: 120px;
+            }
+            .category-nav {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .product-grid {
+                grid-template-columns: repeat(1, 1fr);
+            }
+            #postcode-layer {
+                width: 90%;
+                height: 400px;
+            }
+            .detail-modal-content {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 상단 헤더 -->
+    <header>
+        <div class="logo" onclick="resetToHome()">RIOT SHOP</div>
+        <nav id="nav-menu">
+            <a href="#" onclick="resetToHome(event)">홈</a>
+            <button class="btn-cart" onclick="openCartModal()">장바구니 <span id="cart-count">(0)</span></button>
+            <button class="btn-order" onclick="openCheckoutModal()">주문하기</button>
+            <button id="auth-btn" onclick="openAuthModal()">로그인</button>
+        </nav>
+    </header>
+
+    <!-- 대형 브랜드 섹션 -->
+    <div class="cart-summary">
+        <div class="brand-info">
+            <img src="RIOT.png" alt="Riot Logo" class="brand-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x180?text=RIOT';">
+        </div>
+    </div>
+
+    <!-- 카테고리 네비게이션 -->
+    <nav class="category-nav">
+        <button id="btn-cat-all" class="active" onclick="filterCategory('전체', this)">전체</button>
+        <button onclick="filterCategory('스태츄', this)">스태츄</button>
+        <button onclick="filterCategory('피규어', this)">피규어</button>
+        <button onclick="filterCategory('인형', this)">인형</button>
+        <button onclick="filterCategory('액세서리', this)">액세서리</button>
+        <button onclick="filterCategory('의류', this)">의류</button>
+    </nav>
+
+    <!-- 상품 목록 -->
+    <main class="product-grid" id="product-list"></main>
+
+    <!-- 장바구니 모달 -->
+    <div class="modal" id="cart-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeCartModal()">&times;</span>
+            <h2>장바구니 목록</h2>
+            <div class="cart-list-wrapper" id="cart-modal-list"></div>
+            <div class="total-price-box" id="cart-modal-total">총 금액: 0원</div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button style="flex: 1; padding: 10px; background-color: #888; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="clearCart()">비우기</button>
+                <button style="flex: 2; padding: 10px; background-color: #0051FF; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;" onclick="goToCheckoutFromCart()">주문하러 가기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상품 상세 모달 -->
+    <div class="modal" id="detail-modal">
+        <div class="modal-content detail-modal-content">
+            <span class="close-btn" onclick="closeDetailModal()">&times;</span>
+            <div class="product-detail-img-wrapper">
+                <img id="detail-img" src="" alt="상품 상세 이미지" class="product-detail-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=No+Image';">
+            </div>
+            <h2 id="detail-title" style="text-align: left; margin-bottom: 8px;"></h2>
+            <div id="detail-price" class="price" style="text-align: left; font-size: 20px;"></div>
+            <div class="product-detail-desc">라이엇 공식 스토어 정품입니다. 마우스를 올리면 이미지가 확대됩니다.</div>
+            
+            <div class="detail-btn-group">
+                <button class="btn-add-cart" onclick="addSelectedToCart()">장바구니 담기</button>
+                <button class="btn-buy-now" onclick="buyNowDirectly()">바로 구매하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로그인 / 회원가입 모달 -->
+    <div class="modal" id="auth-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+            
+            <div id="login-box">
+                <h2>로그인</h2>
+                <input type="text" id="login-id" placeholder="아이디">
+                <input type="password" id="login-pw" placeholder="비밀번호">
+                <button class="submit-btn" onclick="handleLogin()">로그인</button>
+                <div class="toggle-text">
+                    계정이 없으신가요? <span onclick="toggleAuthForm('signup')">회원가입</span>
+                </div>
+            </div>
+
+            <div id="signup-box" style="display: none;">
+                <h2>회원가입</h2>
+                <input type="text" id="signup-id" placeholder="아이디 (영문/숫자 4자 이상)">
+                <div class="guide-text">영문 및 숫자 포함 4자 이상</div>
+                
+                <input type="password" id="signup-pw" placeholder="비밀번호">
+                <div class="guide-text">8자 이상, 영문+숫자+특수문자 조합</div>
+
+                <input type="password" id="signup-pw-confirm" placeholder="비밀번호 재확인">
+                
+                <button class="submit-btn" onclick="handleSignup()">가입하기</button>
+                <div class="toggle-text">
+                    이미 계정이 있으신가요? <span onclick="toggleAuthForm('login')">로그인</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 결제 모달 -->
+    <div class="modal" id="checkout-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeCheckoutModal()">&times;</span>
+            <h2>주문 / 결제</h2>
+
+            <div class="section-title">주문 상품 목록</div>
+            <div class="checkout-summary" id="checkout-item-list"></div>
+            <div class="total-price-box" id="checkout-total-price">총 결제금액: 0원</div>
+
+            <div class="section-title">배송지 정보</div>
+            <input type="text" id="pay-name" placeholder="수령인 이름">
+            <input type="text" id="pay-phone" placeholder="연락처 (예: 010-1234-5678)">
+            
+            <div class="address-group">
+                <input type="text" id="pay-postcode" placeholder="우편번호" readonly>
+                <button type="button" onclick="execDaumPostcode()">우편번호 찾기</button>
+            </div>
+            <input type="text" id="pay-address" placeholder="기본 주소 (우편번호 찾기 시 자동입력)" readonly>
+            <input type="text" id="pay-detail-address" placeholder="상세 주소 (동/호수, 건물명 입력)">
+            
+            <select id="pay-memo-select" onchange="handleMemoChange(this)">
+                <option value="">-- 배송 요청사항 선택 --</option>
+                <option value="문 앞에 놓아주세요.">문 앞에 놓아주세요.</option>
+                <option value="경비실에 맡겨주세요.">경비실에 맡겨주세요.</option>
+                <option value="배송 전 연락 부탁드립니다.">배송 전 연락 부탁드립니다.</option>
+                <option value="direct">직접 입력</option>
+            </select>
+            <input type="text" id="pay-memo-custom" placeholder="배송 요청사항 직접 입력" style="display: none;">
+
+            <div class="section-title">결제 수단</div>
+            <div class="toss-pay-box">
+                <span>💙 토스페이 (toss)</span>
+                <span class="toss-badge">전용 결제</span>
+            </div>
+
+            <button class="submit-btn" onclick="processPayment()">토스로 결제하기</button>
+        </div>
+    </div>
+
+    <!-- 우편번호 검색 레이어 -->
+    <div id="postcode-layer">
+        <span id="postcode-layer-close" onclick="closeDaumPostcode()">&times;</span>
+    </div>
+
+    <script>
+        /* 토스페이먼츠 SDK 초기화 */
+        const clientKey = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq";
+        let tossPayments, payment;
+
+        try {
+            tossPayments = TossPayments(clientKey);
+            payment = tossPayments.payment({ 
+                customerKey: "GUEST_USER_" + Math.random().toString(36).substring(2, 11) 
+            });
+        } catch (e) {
+            console.error("Toss SDK Load Error:", e);
+        }
+
+        /* 상품 데이터 */
+        const products = [
+            { id: 1, category: "인형", name: "포로 인형", price: 20000, image: "poro.png" },
+            { id: 2, category: "인형", name: "슬픈 미라 아무무 인형", price: 20000, image: "amumu.jpg" },
+            { id: 3, category: "인형", name: "꿀벌 티모 인형", price: 20000, image: "bee_teemo.png" },
+            { id: 4, category: "인형", name: "판다 티모 인형", price: 20000, image: "panda_teemo.png" },
+            { id: 5, category: "인형", name: "복실복실 티모 인형", price: 20000, image: "rabbit_teemo.png" },
+            { id: 6, category: "인형", name: "티모 인형", price: 20000, image: "teemo.png" },
+            { id: 7, category: "스태츄", name: "K/DA 카이사", price: 209000, image: "kaisa.jpg" },
+            { id: 8, category: "스태츄", name: "K/DA 아리", price: 290000, image: "ari.jpg" },
+            { id: 9, category: "스태츄", name: "K/DA 이블린", price: 209000, image: "evilin.jpg" },
+            { id: 10, category: "스태츄", name: "K/DA 아칼리", price: 249000, image: "akali.jpg" },
+            { id: 11, category: "스태츄", name: "2024 홀 오브 레전드 불멸의 전설 아리", price: 359000, image: "ari1.png" },
+            { id: 12, category: "스태츄", name: "2025 홀 오브 레전드 불멸의 전설 카이사", price: 399000, image: "kaisa.png" },
+            { id: 13, category: "피규어", name: "BE@RBRICK 아케인 징크스 현상수배 포스터", price: 1180000, image: "akain.png" },
+            { id: 14, category: "피규어", name: "2026 홀 오브 레전드: 불멸의 전설 트리스타나", price: 67000, image: "tta.png" },
+            { id: 15, category: "피규어", name: "포로", price: 42000, image: "pro.png" },
+            { id: 16, category: "피규어", name: "DWG 월드 챔피언십 포로", price: 42000, image: "dwg pro.png" },
+            { id: 17, category: "피규어", name: "꿀벌 포로", price: 45000, image: "bee.png" },
+            { id: 18, category: "피규어", name: "별 수호자 카이사 코스플레이 티버", price: 48000, image: "star save.png" },
+            { id: 19, category: "액세서리", name: "홀 오브 레전드 페이커", price: 10000, image: "faker.png" },
+            { id: 20, category: "액세서리", name: "2025 월드 챔피언 T1 소환사의 컵 무드등", price: 75000, image: "t1.png" },
+            { id: 21, category: "액세서리", name: "포로 모자", price: 32000, image: "pro 32000.png" },
+            { id: 22, category: "액세서리", name: "2025 월드 챔피언 T1 티버 열쇠고리", price: 22000, image: "tver.png" },
+            { id: 23, category: "액세서리", name: "포로 찰싹! 터치 무드등", price: 30000, image: "muu.png" },
+            { id: 24, category: "액세서리", name: "티모 모자", price: 29000, image: "tmo.png" },
+            { id: 25, category: "의류", name: "아칼리의 먹방 반팔티", price: 39000, image: "eat.png" },
+            { id: 26, category: "의류", name: "마스터 셰프 탐켄치 반팔티", price: 39000, image: "tam.png" },
+            { id: 27, category: "의류", name: "잊혀진 영웅 뽀삐 반팔티", price: 42000, image: "po.png" },
+            { id: 28, category: "의류", name: "별의 숙적 리버스레드 피들스틱 후드티", price: 109000, image: "star.png" },
+            { id: 29, category: "의류", name: "사랑의 추적자 유미 화이트 후드티", price: 75000, image: "umi.png" },
+            { id: 30, category: "의류", name: "2024 MSI X LI NING 장로 드래곤 후드티 모자", price: 89000, image: "dragon.png" },
+        ];
+
+        let cart = [];
+        let currentCategory = "전체";
+        let selectedProduct = null;
+
+        /* 로컬스토리지 연동 */
+        let users = JSON.parse(localStorage.getItem("shopUsers")) || {};
+        let currentUser = localStorage.getItem("shopCurrentUser") || null;
+
+        /* 홈 버튼 클릭 시 초기 화면('전체' 카테고리)으로 돌아가기 */
+        function resetToHome(event) {
+            if (event) event.preventDefault();
+            
+            const btnAll = document.getElementById("btn-cat-all");
+            filterCategory("전체", btnAll);
+
+            closeCartModal();
+            closeDetailModal();
+            closeCheckoutModal();
+            closeAuthModal();
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        /* 상품 목록 렌더링 */
+        function renderProducts(category = "전체") {
+            const productList = document.getElementById("product-list");
+            if (!productList) return;
+
+            productList.innerHTML = "";
+
+            const filteredProducts = (category === "전체") 
+                ? products 
+                : products.filter(p => p.category === category);
+
+            if (filteredProducts.length === 0) {
+                productList.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">등록된 상품이 없습니다.</div>`;
+                return;
+            }
+
+            filteredProducts.forEach(product => {
+                const card = document.createElement("div");
+                card.className = "product-card";
+                card.onclick = () => openDetailModal(product.id);
+                card.innerHTML = `
+                    <img src="${product.image}" alt="${product.name}" onerror="this.onerror=null; this.src='https://via.placeholder.com/200?text=No+Image';">
+                    <h3>${product.name}</h3>
+                    <div class="price">${product.price.toLocaleString()}원</div>
+                    <button onclick="event.stopPropagation(); openDetailModal(${product.id})">상세보기 및 구매</button>
+                `;
+                productList.appendChild(card);
+            });
+        }
+
+        /* 상세 정보 모달 처리 */
+        function openDetailModal(productId) {
+            selectedProduct = products.find(p => p.id === productId);
+            if (!selectedProduct) return;
+
+            const detailImg = document.getElementById("detail-img");
+            detailImg.src = selectedProduct.image;
+            document.getElementById("detail-title").innerText = selectedProduct.name;
+            document.getElementById("detail-price").innerText = `${selectedProduct.price.toLocaleString()}원`;
+            
+            document.getElementById("detail-modal").style.display = "flex";
+        }
+
+        function closeDetailModal() {
+            document.getElementById("detail-modal").style.display = "none";
+            selectedProduct = null;
+        }
+
+        /* 장바구니 담기 */
+        function addSelectedToCart() {
+            if (selectedProduct) {
+                cart.push(selectedProduct);
+                updateCartCount();
+                alert(`${selectedProduct.name}이(가) 장바구니에 담겼습니다!`);
+                closeDetailModal();
+            }
+        }
+
+        function updateCartCount() {
+            document.getElementById("cart-count").innerText = `(${cart.length})`;
+        }
+
+        /* 바로 구매 */
+        function buyNowDirectly() {
+            if (!currentUser) {
+                alert("주문하시려면 먼저 로그인 해주세요.");
+                closeDetailModal();
+                openAuthModal();
+                return;
+            }
+
+            if (selectedProduct) {
+                cart.push(selectedProduct);
+                updateCartCount();
+                closeDetailModal();
+                openCheckoutModal();
+            }
+        }
+
+        /* 장바구니 모달 기능 */
+        function openCartModal() {
+            const cartList = document.getElementById("cart-modal-list");
+            cartList.innerHTML = "";
+
+            if (cart.length === 0) {
+                cartList.innerHTML = `<div style="text-align: center; padding: 30px; color: #888;">장바구니가 비어 있습니다.</div>`;
+                document.getElementById("cart-modal-total").innerText = "총 금액: 0원";
+            } else {
+                let total = 0;
+                cart.forEach((item, index) => {
+                    total += item.price;
+                    const itemDiv = document.createElement("div");
+                    itemDiv.className = "cart-item";
+                    itemDiv.innerHTML = `
+                        <img src="${item.image}" class="cart-item-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/50?text=No+Image';">
+                        <div class="cart-item-info">
+                            <div class="cart-item-title">${item.name}</div>
+                            <div class="cart-item-price">${item.price.toLocaleString()}원</div>
+                        </div>
+                        <button class="cart-item-del-btn" onclick="removeFromCart(${index})">삭제</button>
+                    `;
+                    cartList.appendChild(itemDiv);
+                });
+                document.getElementById("cart-modal-total").innerText = `총 금액: ${total.toLocaleString()}원`;
+            }
+
+            document.getElementById("cart-modal").style.display = "flex";
+        }
+
+        function closeCartModal() {
+            document.getElementById("cart-modal").style.display = "none";
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartCount();
+            openCartModal();
+        }
+
+        function clearCart() {
+            if (cart.length === 0) return;
+            if (confirm("장바구니를 비우시겠습니까?")) {
+                cart = [];
+                updateCartCount();
+                openCartModal();
+            }
+        }
+
+        function goToCheckoutFromCart() {
+            closeCartModal();
+            openCheckoutModal();
+        }
+
+        /* 카테고리 필터 클릭 */
+        function filterCategory(category, btnElement) {
+            currentCategory = category;
+            
+            const buttons = document.querySelectorAll('.category-nav button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            if (btnElement) {
+                btnElement.classList.add('active');
+            }
+
+            renderProducts(category);
+        }
+
+        /* 우편번호 API */
+        const element_layer = document.getElementById('postcode-layer');
+
+        function closeDaumPostcode() {
+            element_layer.style.display = 'none';
+        }
+
+        function execDaumPostcode() {
+            if (typeof daum === 'undefined' || !daum.Postcode) {
+                alert("우편번호 서비스 스크립트가 로드되지 않았습니다.");
+                return;
+            }
+
+            new daum.Postcode({
+                oncomplete: function(data) {
+                    let addr = '';
+                    let extraAddr = '';
+
+                    if (data.userSelectedType === 'R') {
+                        addr = data.roadAddress;
+                    } else {
+                        addr = data.jibunAddress;
+                    }
+
+                    if (data.userSelectedType === 'R') {
+                        if (data.bname !== '' && /[동|리]$/g.test(data.bname)) {
+                            extraAddr += data.bname;
+                        }
+                        if (data.buildingName !== '' && data.apartment === 'Y') {
+                            extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                        }
+                        if (extraAddr !== '') {
+                            extraAddr = ' (' + extraAddr + ')';
+                        }
+                    }
+
+                    document.getElementById('pay-postcode').value = data.zonecode;
+                    document.getElementById('pay-address').value = addr + extraAddr;
+                    
+                    element_layer.style.display = 'none';
+                    document.getElementById('pay-detail-address').focus();
+                },
+                width : '100%',
+                height : '100%'
+            }).embed(element_layer);
+
+            element_layer.style.display = 'block';
+        }
+
+        function handleMemoChange(selectElement) {
+            const customInput = document.getElementById("pay-memo-custom");
+            if (selectElement.value === "direct") {
+                customInput.style.display = "block";
+                customInput.focus();
+            } else {
+                customInput.style.display = "none";
+                customInput.value = "";
+            }
+        }
+
+        function openCheckoutModal() {
+            if (!currentUser) {
+                alert("주문하시려면 먼저 로그인 해주세요.");
+                openAuthModal();
+                return;
+            }
+
+            if (cart.length === 0) {
+                alert("장바구니가 비어 있습니다.");
+                return;
+            }
+
+            const checkoutItemList = document.getElementById("checkout-item-list");
+            checkoutItemList.innerHTML = "";
+
+            const summary = {};
+            cart.forEach(item => {
+                if (summary[item.name]) {
+                    summary[item.name].count += 1;
+                    summary[item.name].totalPrice += item.price;
+                } else {
+                    summary[item.name] = { count: 1, totalPrice: item.price };
+                }
+            });
+
+            for (const [name, info] of Object.entries(summary)) {
+                const div = document.createElement("div");
+                div.className = "checkout-summary-item";
+                div.innerHTML = `
+                    <span>${name} x ${info.count}</span>
+                    <span>${info.totalPrice.toLocaleString()}원</span>
+                `;
+                checkoutItemList.appendChild(div);
+            }
+
+            const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById("checkout-total-price").innerText = `총 결제금액: ${totalPrice.toLocaleString()}원`;
+            document.getElementById("checkout-modal").style.display = "flex";
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById("checkout-modal").style.display = "none";
+            closeDaumPostcode();
+        }
+
+        async function processPayment() {
+            const name = document.getElementById("pay-name").value.trim();
+            const phone = document.getElementById("pay-phone").value.trim();
+            const postcode = document.getElementById("pay-postcode").value.trim();
+            const address = document.getElementById("pay-address").value.trim();
+            const detailAddress = document.getElementById("pay-detail-address").value.trim();
+
+            if (!name || !phone) {
+                alert("수령인 이름과 연락처를 입력해주세요.");
+                return;
+            }
+
+            if (!postcode || !address) {
+                alert("우편번호 찾기를 통해 주소를 입력해주세요.");
+                return;
+            }
+
+            if (!detailAddress) {
+                alert("상세 주소(동/호수 등)를 입력해주세요.");
+                return;
+            }
+
+            const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
+            const orderTitle = cart.length > 1 
+                ? `${cart[0].name} 외 ${cart.length - 1}건` 
+                : cart[0].name;
+
+            try {
+                if (!payment) {
+                    alert("토스 결제 모듈이 준비되지 않았습니다.");
+                    return;
+                }
+                await payment.requestPayment({
+                    method: "CARD",
+                    amount: {
+                        currency: "KRW",
+                        value: totalPrice,
+                    },
+                    orderId: "ORDER_" + new Date().getTime(),
+                    orderName: orderTitle,
+                    successUrl: window.location.origin + "/success.html",
+                    failUrl: window.location.origin + "/fail.html",
+                    customerEmail: "user@example.com",
+                    customerName: name,
+                    customerMobilePhone: phone.replace(/[^0-9]/g, ""),
+                });
+            } catch (error) {
+                console.error("결제 창 요청 실패:", error);
+                alert("결제창을 불러오는 중 오류가 발생했습니다: " + error.message);
+            }
+        }
+
+        /* 로그인 / 회원가입 기능 */
+        function openAuthModal() {
+            document.getElementById("auth-modal").style.display = "flex";
+        }
+
+        function closeAuthModal() {
+            document.getElementById("auth-modal").style.display = "none";
+        }
+
+        function toggleAuthForm(type) {
+            if (type === "signup") {
+                document.getElementById("login-box").style.display = "none";
+                document.getElementById("signup-box").style.display = "block";
+            } else {
+                document.getElementById("login-box").style.display = "block";
+                document.getElementById("signup-box").style.display = "none";
+            }
+        }
+
+        function handleSignup() {
+            const id = document.getElementById("signup-id").value.trim();
+            const pw = document.getElementById("signup-pw").value.trim();
+            const pwConfirm = document.getElementById("signup-pw-confirm").value.trim();
+
+            const idRegex = /^[a-zA-Z0-9]{4,}$/;
+            if (!idRegex.test(id)) {
+                alert("아이디는 영문 및 숫자 조합 4자 이상이어야 합니다.");
+                return;
+            }
+
+            const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+            if (!pwRegex.test(pw)) {
+                alert("비밀번호는 최소 8자 이상이며, 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다.");
+                return;
+            }
+
+            if (pw !== pwConfirm) {
+                alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+                return;
+            }
+
+            if (users[id]) {
+                alert("이미 존재하는 아이디입니다.");
+                return;
+            }
+
+            users[id] = pw;
+            localStorage.setItem("shopUsers", JSON.stringify(users));
+
+            alert("회원가입이 성공적으로 완료되었습니다! 로그인 해주세요.");
+            
+            document.getElementById("signup-id").value = "";
+            document.getElementById("signup-pw").value = "";
+            document.getElementById("signup-pw-confirm").value = "";
+            toggleAuthForm("login");
+        }
+
+        function handleLogin() {
+            const id = document.getElementById("login-id").value.trim();
+            const pw = document.getElementById("login-pw").value.trim();
+
+            if (!id || !pw) {
+                alert("아이디와 비밀번호를 입력해주세요.");
+                return;
+            }
+
+            if (users[id] && users[id] === pw) {
+                currentUser = id;
+                localStorage.setItem("shopCurrentUser", currentUser);
+
+                alert(`${currentUser}님, 환영합니다!`);
+                updateAuthUI();
+                closeAuthModal();
+                document.getElementById("login-id").value = "";
+                document.getElementById("login-pw").value = "";
+            } else {
+                alert("아이디 또는 비밀번호가 올바르지 않습니다.");
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem("shopCurrentUser");
+
+            alert("로그아웃 되었습니다.");
+            updateAuthUI();
+        }
+
+        function updateAuthUI() {
+            const authBtn = document.getElementById("auth-btn");
+            if (currentUser) {
+                authBtn.innerText = `로그아웃 (${currentUser})`;
+                authBtn.onclick = handleLogout;
+            } else {
+                authBtn.innerText = "로그인";
+                authBtn.onclick = openAuthModal;
+            }
+        }
+
+        /* 페이지 로딩 완료 후 전체 상품 목록 렌더링 */
+        document.addEventListener("DOMContentLoaded", function() {
+            renderProducts("전체");
+            updateAuthUI();
+            updateCartCount();
+        });
+    </script>
+</body>
+</html>
