@@ -2,44 +2,110 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>결제 처리 중...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 완료</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 14px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        .info-label {
+            color: #888;
+        }
+        .info-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .btn-home {
+            display: inline-block;
+            width: 100%;
+            padding: 12px 0;
+            background-color: #0051FF;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+        .btn-home:hover {
+            background-color: #003ebd;
+        }
+    </style>
 </head>
 <body>
-    <h2>결제를 승인하는 중입니다. 잠시만 기다려주세요...</h2>
+
+    <div class="container">
+        <div class="icon">🎉</div>
+        <h2>결제가 완료되었습니다!</h2>
+        <p>주문해주셔서 감사합니다.<br>빠르고 안전하게 배송해 드리겠습니다.</p>
+
+        <div class="info-box">
+            <div class="info-row">
+                <span class="info-label">주문 번호</span>
+                <span class="info-value" id="order-id">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">결제 금액</span>
+                <span class="info-value" id="amount">-</span>
+            </div>
+        </div>
+
+        <a href="index.html" class="btn-home">메인으로 돌아가기</a>
+    </div>
 
     <script>
-        // URL 쿼리 파라미터에서 결제 정보 추출 (paymentKey, orderId, amount)
+        // URL에서 orderId와 amount 매개변수 추출
         const urlParams = new URLSearchParams(window.location.search);
-        const paymentKey = urlParams.get("paymentKey");
-        const orderId = urlParams.get("orderId");
-        const amount = urlParams.get("amount");
+        const orderId = urlParams.get('orderId') || 'ORDER_SUCCESS';
+        const amount = urlParams.get('amount') || '0';
 
-        // 백엔드 서버로 승인 요청
-        async function confirmPayment() {
-            const response = await fetch("http://localhost:3000/api/confirm-payment", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    paymentKey: paymentKey,
-                    orderId: orderId,
-                    amount: amount
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                alert("결제가 성공적으로 완료되었습니다!");
-                location.href = "/"; // 메인 페이지로 이동
-            } else {
-                alert("결제 승인 실패: " + result.message);
-                location.href = "/";
-            }
-        }
-
-        confirmPayment();
+        document.getElementById('order-id').innerText = orderId;
+        document.getElementById('amount').innerText = Number(amount).toLocaleString() + '원';
     </script>
 </body>
 </html>
